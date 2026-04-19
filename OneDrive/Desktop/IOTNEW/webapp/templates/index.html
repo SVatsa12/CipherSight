@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherSight | Hardware Verification</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <div class="glass-card">
+            <header>
+                <div class="logo">
+                    <span class="logo-accent">Cipher</span>Sight
+                </div>
+                <h1>Hardware Verification</h1>
+                <p>Enter the 4-digit code displayed on your registered hardware device.</p>
+            </header>
+
+            <form id="otp-form">
+                <div class="otp-inputs">
+                    <input type="text" maxlength="1" pattern="\d" required>
+                    <input type="text" maxlength="1" pattern="\d" required>
+                    <input type="text" maxlength="1" pattern="\d" required>
+                    <input type="text" maxlength="1" pattern="\d" required>
+                </div>
+                
+                <button type="submit" id="submit-btn">Verify Identity</button>
+                <div id="message" class="message"></div>
+            </form>
+
+            <div class="footer">
+                <p>Session ID: <span class="session-id">{{ session_id }}</span></p>
+                <button class="resend-btn" onclick="location.reload()">Resend Code</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const inputs = document.querySelectorAll('.otp-inputs input');
+        const form = document.getElementById('otp-form');
+        const messageDiv = document.getElementById('message');
+        const sessionId = "{{ session_id }}";
+
+        // Auto-focus and backspace logic
+        inputs.forEach((input, index) => {
+            input.addEventListener('input', (e) => {
+                if (e.target.value && index < inputs.length - 1) {
+                    inputs[index + 1].focus();
+                }
+            });
+
+            input.addEventListener('keydown', (e) => {
+                if (e.key === 'Backspace' && !e.target.value && index > 0) {
+                    inputs[index - 1].focus();
+                }
+            });
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const otp = Array.from(inputs).map(i => i.value).join('');
+            
+            if (otp.length !== 4) return;
+
+            messageDiv.textContent = "Verifying...";
+            messageDiv.className = "message info";
+
+            const response = await fetch('/validate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ session_id: sessionId, otp: otp })
+            });
+
+            const result = await response.json();
+            
+            if (result.success) {
+                messageDiv.textContent = result.message;
+                messageDiv.className = "message success";
+                setTimeout(() => {
+                    window.location.href = result.redirect;
+                }, 2000);
+            } else {
+                messageDiv.textContent = result.message;
+                messageDiv.className = "message error";
+                inputs.forEach(i => (i.value = '', i.classList.add('error')));
+                setTimeout(() => inputs.forEach(i => i.classList.remove('error')), 500);
+                inputs[0].focus();
+            }
+        });
+    </script>
+</body>
+</html>
