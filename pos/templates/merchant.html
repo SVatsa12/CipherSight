@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merchant Dashboard | CipherSight POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        :root { --primary:#4f46e5; --bg:#f0f4ff; --card:#fff; --text:#0f172a; --success:#10b981; --danger:#ef4444; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:var(--bg); color:var(--text); display:flex; justify-content:center; align-items:center; min-height:100vh; padding:20px; }
+        .container { width:100%; max-width:520px; background:var(--card); border-radius:28px; padding:40px; box-shadow:0 20px 60px rgba(79,70,229,.12); }
+        .header { text-align:center; margin-bottom:36px; }
+        .badge { display:inline-flex; align-items:center; gap:6px; background:rgba(79,70,229,.08); color:var(--primary); font-size:.7rem; font-weight:700; letter-spacing:1px; text-transform:uppercase; padding:6px 12px; border-radius:20px; margin-bottom:16px; }
+        .badge::before { content:'●'; font-size:.6rem; color:var(--success); }
+        h1 { font-size:1.6rem; } h1 span { color:var(--primary); }
+        .header p { color:#64748b; font-size:.9rem; margin-top:8px; }
+        .form-group { margin-bottom:20px; }
+        label { display:block; margin-bottom:8px; font-weight:600; font-size:.85rem; color:#475569; }
+        input[type="number"] { width:100%; padding:16px 20px; border:2px solid #e2e8f0; border-radius:14px; font-size:1.4rem; font-weight:700; text-align:center; outline:none; transition:all .2s; }
+        input[type="number"]:focus { border-color:var(--primary); box-shadow:0 0 0 4px rgba(79,70,229,.1); }
+        .btn { width:100%; padding:16px; border:none; border-radius:14px; background:var(--primary); color:#fff; font-family:inherit; font-weight:700; font-size:1rem; cursor:pointer; transition:all .2s; box-shadow:0 4px 15px rgba(79,70,229,.3); }
+        .btn:hover { transform:translateY(-2px); box-shadow:0 8px 20px rgba(79,70,229,.4); }
+        .btn:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+        .tx-panel { display:none; }
+        hr { border:none; border-top:1px solid #f1f5f9; margin:28px 0; }
+        .tx-summary { background:linear-gradient(135deg,#f0f4ff,#fff); border:1px solid #e0e7ff; border-radius:16px; padding:20px; text-align:center; margin-bottom:20px; }
+        .amount { font-size:2.5rem; font-weight:700; }
+        .sub { font-size:.8rem; color:#94a3b8; margin-top:4px; }
+        .tx-id-badge { display:inline-block; background:var(--primary); color:#fff; font-family:monospace; font-size:.9rem; padding:4px 12px; border-radius:8px; margin-top:10px; }
+        .customer-link-section h3 { font-size:.85rem; font-weight:700; color:#64748b; text-transform:uppercase; letter-spacing:1px; margin-bottom:12px; }
+        .link-box { background:#f8fafc; border:1px dashed #cbd5e1; border-radius:12px; padding:12px 16px; font-family:monospace; font-size:.85rem; color:#475569; word-break:break-all; margin-bottom:10px; }
+        .copy-btn { width:100%; padding:10px; border:2px solid var(--primary); border-radius:10px; background:transparent; color:var(--primary); font-family:inherit; font-weight:600; font-size:.85rem; cursor:pointer; transition:all .2s; margin-bottom:16px; }
+        .copy-btn:hover { background:var(--primary); color:#fff; }
+        #qr-canvas { display:block; margin:0 auto; border-radius:12px; }
+        .pin-section { text-align:center; }
+        .pin-btn { background:var(--danger); box-shadow:0 4px 15px rgba(239,68,68,.3); }
+        .pin-btn:hover { box-shadow:0 8px 20px rgba(239,68,68,.4); }
+        .pin-sent { color:var(--success); font-size:.85rem; margin-top:12px; display:none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header class="header">
+        <div class="badge">Terminal Active</div>
+        <h1><span>Cipher</span>Sight POS</h1>
+        <p>Two-Factor Secure Payment Terminal</p>
+    </header>
+
+    <div id="setup-form">
+        <div class="form-group">
+            <label>Transaction Amount (USD)</label>
+            <input type="number" id="amt" placeholder="49.99" step="0.01" min="0.01">
+        </div>
+        <button class="btn" id="initiate-btn" onclick="startTransaction()">⚡ Initiate Secure Payment</button>
+    </div>
+
+    <div id="tx-panel" class="tx-panel">
+        <div class="tx-summary">
+            <div class="amount">$<span id="amt-display">0.00</span></div>
+            <div class="sub">Transaction Amount</div>
+            <div class="tx-id-badge" id="tx-id-display">TX-0000</div>
+            <div class="sub" style="color:#10b981;margin-top:8px;">✓ Share A → OLED via MQTT</div>
+        </div>
+        <hr>
+        <div class="customer-link-section">
+            <h3>📱 Customer Payment Link</h3>
+            <p style="font-size:.8rem;color:#64748b;margin-bottom:12px;">Share this QR code or link with your customer</p>
+            <div class="link-box" id="customer-link-display"></div>
+            <button class="copy-btn" onclick="copyLink()">📋 Copy Link</button>
+            <div id="qrcode" style="display:flex; justify-content:center; padding:10px; background:#fff; border-radius:12px; margin: 0 auto; width: fit-content;"></div>
+        </div>
+        <hr>
+        <div class="pin-section">
+            <p style="font-size:.85rem;color:#64748b;margin-bottom:12px;">After customer opens their secure portal, send the sync code to the hardware</p>
+            <button class="btn pin-btn" id="pin-btn" onclick="sendPIN()">🔐 Send Sync Code to Hardware</button>
+            <div class="pin-sent" id="pin-sent">✅ Code sent to OLED — customer must type it to unlock their Token</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentTx = null;
+    let customerLink = '';
+
+    async function startTransaction() {
+        const amt = document.getElementById('amt').value;
+        if (!amt || parseFloat(amt) <= 0) { alert('Enter a valid amount.'); return; }
+        const btn = document.getElementById('initiate-btn');
+        btn.textContent = 'Processing...'; btn.disabled = true;
+
+        // Fetch network info to generate a phone-scannable Local IP link
+        let ip_host = window.location.origin;
+        try {
+            const ipRes = await fetch('/api/network-info');
+            if (ipRes.ok) {
+                const ipData = await ipRes.json();
+                ip_host = `http://${ipData.ip}:${ipData.port}`; 
+            }
+        } catch(e) {}
+
+        const res = await fetch('/api/create-transaction', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ amount: amt })
+        });
+        const data = await res.json();
+        if (data.success) {
+            currentTx = data.tx_id;
+            // Customer link ONLY contains tx_id — share_b is fetched server-side
+            customerLink = `${ip_host}/customer?tx=${data.tx_id}`;
+
+            document.getElementById('setup-form').style.display = 'none';
+            document.getElementById('tx-panel').style.display = 'block';
+            document.getElementById('amt-display').textContent = parseFloat(amt).toFixed(2);
+            document.getElementById('tx-id-display').textContent = data.tx_id;
+            document.getElementById('customer-link-display').textContent = customerLink;
+
+            document.getElementById('qrcode').innerHTML = "";
+            new QRCode(document.getElementById('qrcode'), {
+                text: customerLink,
+                width: 180,
+                height: 180,
+                colorDark : "#0f172a",
+                colorLight : "#ffffff",
+                correctLevel : QRCode.CorrectLevel.L
+            });
+        }
+    }
+
+    function copyLink() {
+        navigator.clipboard.writeText(customerLink).then(() => {
+            const btn = document.querySelector('.copy-btn');
+            btn.textContent = '✓ Copied!';
+            setTimeout(() => btn.textContent = '📋 Copy Link', 2000);
+        });
+    }
+
+    async function sendPIN() {
+        if (!currentTx) return;
+        const btn = document.getElementById('pin-btn');
+        btn.textContent = 'Sending...'; btn.disabled = true;
+        const res = await fetch(`/api/display-pin/${currentTx}`, { method: 'POST' });
+        const data = await res.json();
+        if (data.success) document.getElementById('pin-sent').style.display = 'block';
+        else { btn.textContent = '🔐 Retry'; btn.disabled = false; }
+    }
+</script>
+</body>
+</html>

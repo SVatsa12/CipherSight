@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Payment | CipherSight POS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root { --primary:#4f46e5; --secondary:#10b981; --bg:#0b1120; --card:rgba(30,41,59,.85); --danger:#ef4444; }
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Plus Jakarta Sans',sans-serif; background:radial-gradient(ellipse at top,#1e293b 0%,#0b1120 60%); color:#f8fafc; min-height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
+        .card { width:100%; max-width:400px; background:var(--card); backdrop-filter:blur(20px); border-radius:28px; border:1px solid rgba(255,255,255,.08); padding:36px; box-shadow:0 25px 60px rgba(0,0,0,.5); animation:rise .5s ease-out; }
+        @keyframes rise { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+        .badge { display:inline-flex; align-items:center; gap:6px; background:rgba(79,70,229,.15); border:1px solid rgba(79,70,229,.3); color:#818cf8; font-size:.68rem; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; padding:5px 12px; border-radius:20px; margin-bottom:16px; }
+        h1 { font-size:1.5rem; margin-bottom:8px; } h1 span { color:#818cf8; }
+        .sub { font-size:.85rem; color:#64748b; line-height:1.5; }
+        hr { border:none; border-top:1px solid rgba(255,255,255,.06); margin:24px 0; }
+
+        /* Loading spinner */
+        .spinner { display:flex; flex-direction:column; align-items:center; gap:16px; padding:20px 0; }
+        .spinner-ring { width:48px; height:48px; border:3px solid rgba(79,70,229,.2); border-top-color:#4f46e5; border-radius:50%; animation:spin 1s linear infinite; }
+        @keyframes spin { to { transform:rotate(360deg); } }
+
+        /* Waiting (no tx) */
+        #waiting-view { text-align:center; padding:20px 0; }
+        #waiting-view .icon { font-size:3rem; margin-bottom:16px; animation:pulse 2s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+        /* Share B */
+        .share-box { background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.06); border-radius:16px; padding:16px; text-align:center; margin-bottom:20px; position:relative; overflow:hidden; }
+        .share-box img { max-width:100%; border-radius:8px; }
+        .share-label { font-size:.65rem; color:#475569; text-transform:uppercase; letter-spacing:1px; margin-top:10px; }
+        .scan-line { position:absolute; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,#4f46e5,transparent); animation:scanline 2s linear infinite; top:0; }
+        @keyframes scanline { 0%{top:0} 100%{top:100%} }
+
+        .tx-meta { display:flex; justify-content:space-between; font-size:.8rem; color:#64748b; margin-bottom:8px; }
+        .tx-meta strong { color:#c7d2fe; font-family:monospace; }
+        .amount-big { font-size:2rem; font-weight:700; text-align:center; margin:12px 0; }
+
+        label { display:block; margin-bottom:10px; font-size:.8rem; color:#94a3b8; }
+        .otp-inputs { display:flex; gap:10px; justify-content:center; margin-bottom:20px; }
+        .otp-inputs input { width:58px; height:60px; background:rgba(255,255,255,.04); border:2px solid rgba(255,255,255,.08); border-radius:14px; font-size:1.5rem; font-weight:700; color:#fff; text-align:center; outline:none; transition:all .2s; }
+        .otp-inputs input:focus { border-color:var(--primary); background:rgba(79,70,229,.1); box-shadow:0 0 0 4px rgba(79,70,229,.15); transform:scale(1.05); }
+        .otp-inputs input.shake { animation:shake .4s ease; border-color:var(--danger); }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-5px)} 75%{transform:translateX(5px)} }
+
+        .btn { width:100%; padding:15px; border:none; border-radius:14px; background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; font-family:inherit; font-weight:700; font-size:1rem; cursor:pointer; transition:all .2s; box-shadow:0 4px 15px rgba(79,70,229,.35); }
+        .btn:hover { transform:translateY(-2px); box-shadow:0 8px 25px rgba(79,70,229,.5); }
+        .msg { margin-top:14px; font-size:.85rem; text-align:center; min-height:20px; }
+        .msg.error { color:var(--danger); } .msg.success { color:var(--secondary); } .msg.info { color:#818cf8; }
+
+        #success-view { text-align:center; display:none; }
+        #success-view .check { font-size:4rem; margin-bottom:16px; }
+        #success-view h2 { color:var(--secondary); margin-bottom:8px; }
+        #success-view p { color:#64748b; font-size:.85rem; }
+    </style>
+</head>
+<body>
+<div class="card">
+    <div class="badge">🔒 Secure Payment</div>
+    <h1><span>Cipher</span>Sight Pay</h1>
+    <p class="sub">Two-Factor Visual Cryptography POS</p>
+    <hr>
+
+    <!-- No tx_id provided -->
+    <div id="waiting-view" style="display:none;">
+        <div class="icon">📡</div>
+        <h2 style="margin-bottom:10px;">Waiting for Transaction</h2>
+        <p>Ask the merchant to initiate a payment from their terminal. They will share a link or QR code with you.</p>
+    </div>
+
+    <!-- Loading share_b from server -->
+    <div id="loading-view" style="display:none;">
+        <div class="spinner">
+            <div class="spinner-ring"></div>
+            <p class="sub">Loading your secure share…</p>
+        </div>
+    </div>
+
+    <!-- Payment view -->
+    <div id="payment-view" style="display:none;">
+        <div class="tx-meta">
+            <span>Transaction</span>
+            <strong id="tx-id-show">—</strong>
+        </div>
+        <div class="amount-big">$<span id="amt-show">—</span></div>
+
+        <div style="text-align:center; padding: 20px; background: rgba(79,70,229,0.1); border-radius: 16px; margin-bottom: 20px; border: 1px dashed rgba(79,70,229,0.3);">
+            <div style="font-size: 2.5rem; margin-bottom: 10px;">🔐</div>
+            <h3 style="color: #c7d2fe; font-size: 1rem; margin-bottom: 8px;">Hardware Sync Required</h3>
+            <p style="color: #94a3b8; font-size: 0.8rem; line-height: 1.5;">Look at the Merchant's ESP32 OLED screen. The noise pattern securely pairs with your session.</p>
+        </div>
+        <hr>
+        <label style="text-align:center; margin-bottom: 16px;">Enter the 4-digit sync code from the hardware display</label>
+        <div class="otp-inputs">
+            <input type="text" maxlength="1" inputmode="numeric">
+            <input type="text" maxlength="1" inputmode="numeric">
+            <input type="text" maxlength="1" inputmode="numeric">
+            <input type="text" maxlength="1" inputmode="numeric">
+        </div>
+        <button class="btn" onclick="verifyPayment()">✓ Confirm & Pay</button>
+        <div id="msg" class="msg"></div>
+    </div>
+
+    <!-- Success -->
+    <div id="success-view" style="display:none; text-align:center;">
+        <div class="check" style="font-size:4rem; margin-bottom:16px;">✅</div>
+        <h2 style="color:var(--secondary); margin-bottom:8px;">Payment Verified!</h2>
+        <p style="color:#64748b; font-size:.85rem;">Hardware physically verified via server-side reconstruction.</p>
+        
+        <div style="margin-top: 24px; padding: 16px; background: #fff; border-radius: 16px; display: inline-block; box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+            <img id="reconstructed-img" src="" alt="Verified Signature" style="width: 140px; height: 140px; display: block;">
+        </div>
+        <div style="font-size: .65rem; color: #818cf8; text-transform: uppercase; letter-spacing: 1px; margin-top: 12px; font-weight: 700;">Secure Signature Unlocked</div>
+
+        <button class="btn" style="margin-top:28px;" onclick="location.reload()">Done</button>
+    </div>
+</div>
+
+<script>
+    const params = new URLSearchParams(window.location.search);
+    const txId = params.get('tx');
+    const inputs = document.querySelectorAll('.otp-inputs input');
+
+    async function init() {
+        if (!txId) {
+            document.getElementById('waiting-view').style.display = 'block';
+            return;
+        }
+
+        // Show loading while fetching from server
+        document.getElementById('loading-view').style.display = 'block';
+
+        try {
+            const res = await fetch(`/api/transaction/${txId}`);
+            if (!res.ok) throw new Error('Transaction not found');
+            const data = await res.json();
+
+            document.getElementById('loading-view').style.display = 'none';
+
+            if (data.status === 'completed') {
+                document.getElementById('success-view').style.display = 'block';
+                document.getElementById('success-view').innerHTML = `
+                    <div class="check" style="font-size:4rem; margin-bottom:16px;">✅</div>
+                    <h2 style="color:var(--secondary); margin-bottom:8px;">Payment Already Verified</h2>
+                    <p style="color:#64748b; font-size:.85rem;">This transaction has already been completed.</p>
+                `;
+                return;
+            }
+
+            document.getElementById('payment-view').style.display = 'block';
+            document.getElementById('tx-id-show').textContent = data.tx_id;
+            document.getElementById('amt-show').textContent = parseFloat(data.amount).toFixed(2);
+
+            // Wire up OTP inputs
+            inputs.forEach((input, i) => {
+                input.addEventListener('input', () => {
+                    if (input.value && i < inputs.length - 1) inputs[i+1].focus();
+                });
+                input.addEventListener('keydown', e => {
+                    if (e.key === 'Backspace' && !input.value && i > 0) inputs[i-1].focus();
+                });
+                input.addEventListener('paste', e => {
+                    e.preventDefault();
+                    const pastedData = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, inputs.length);
+                    if (pastedData) {
+                        pastedData.split('').forEach((char, idx) => {
+                            if (inputs[i + idx]) {
+                                inputs[i + idx].value = char;
+                            }
+                        });
+                        const nextFocus = Math.min(i + pastedData.length, inputs.length - 1);
+                        inputs[nextFocus].focus();
+                    }
+                });
+            });
+            inputs[0].focus();
+
+        } catch (e) {
+            document.getElementById('loading-view').style.display = 'none';
+            document.getElementById('waiting-view').style.display = 'block';
+            document.querySelector('#waiting-view h2').textContent = 'Transaction Not Found';
+            document.querySelector('#waiting-view p').textContent = 'This link may be expired or invalid. Ask the merchant to re-initiate.';
+        }
+    }
+
+    async function verifyPayment() {
+        const otp = Array.from(inputs).map(i => i.value).join('');
+        if (otp.length !== 4) { showMsg('Enter all 4 digits', 'error'); return; }
+
+        const btn = document.querySelector('#payment-view .btn');
+        if (btn) btn.disabled = true;
+
+        showMsg('Verifying…', 'info');
+        
+        try {
+            const res = await fetch('/api/verify-payment', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tx_id: txId, otp })
+            });
+            const data = await res.json();
+
+            if (data.success) {
+                document.getElementById('payment-view').style.display = 'none';
+                document.getElementById('success-view').style.display = 'block';
+                document.getElementById('reconstructed-img').src = 'data:image/png;base64,' + data.reconstructed_qr;
+            } else {
+                if (btn) btn.disabled = false;
+                showMsg(data.message || 'Invalid code. Check the OLED screen.', 'error');
+                inputs.forEach(i => { i.value = ''; i.classList.add('shake'); });
+                setTimeout(() => inputs.forEach(i => i.classList.remove('shake')), 400);
+                inputs[0].focus();
+            }
+        } catch (err) {
+            if (btn) btn.disabled = false;
+            showMsg('Network error. Target Machine refused connection.', 'error');
+        }
+    }
+
+    function showMsg(text, type) {
+        const el = document.getElementById('msg');
+        el.textContent = text; el.className = 'msg ' + type;
+    }
+
+    init();
+</script>
+</body>
+</html>

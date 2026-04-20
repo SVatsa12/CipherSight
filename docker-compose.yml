@@ -1,0 +1,17 @@
+version: '3.8'
+
+services:
+  orchestrator:
+    build: .
+    volumes:
+      - ./outputs:/app/outputs
+    environment:
+      - MQTT_BROKER=broker.hivemq.com
+    command: python core/orchestrator.py
+  webapp:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - MQTT_BROKER=broker.hivemq.com
+    command: python pos/app.py
