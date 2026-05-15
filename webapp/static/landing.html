@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CipherSight | Anti-Quishing Security Platform</title>
+    <meta name="description" content="CipherSight prevents QR phishing attacks using (2,2) Visual Cryptography, MQTT-based OTP, and ESP32 hardware confirmation. Hardware-backed authentication you can trust.">
+    <link rel="stylesheet" href="/static/landing.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Background layers -->
+    <div class="bg-scene"></div>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <canvas id="particle-canvas"></canvas>
+
+    <!-- Threat Intelligence Ticker -->
+    <div class="threat-ticker" role="marquee" aria-label="Live threat feed">
+        <div class="ticker-track" id="ticker-track">
+            <span class="ticker-item">QUISHING ATTACKS UP 340% IN 2024</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">85% of QR phishing goes undetected by standard filters</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">MITM QR HIJACK DETECTED — 3 affected endpoints</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">Malicious QR code redirects bypass URL reputation checks</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">CipherSight SHIELD ACTIVE — Hardware verification enforced</span>
+            <span class="ticker-sep">///</span>
+            <!-- Duplicate for seamless loop -->
+            <span class="ticker-item">QUISHING ATTACKS UP 340% IN 2024</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">85% of QR phishing goes undetected by standard filters</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">MITM QR HIJACK DETECTED — 3 affected endpoints</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">Malicious QR code redirects bypass URL reputation checks</span>
+            <span class="ticker-sep">///</span>
+            <span class="ticker-item">CipherSight SHIELD ACTIVE — Hardware verification enforced</span>
+            <span class="ticker-sep">///</span>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <header class="nav" role="banner">
+        <div class="logo" aria-label="CipherSight Home">
+            <div class="logo-icon" aria-hidden="true"><i data-lucide="shield-check"></i></div>
+            <span class="logo-accent">Cipher</span>Sight
+        </div>
+        <nav class="nav-links" aria-label="Main navigation">
+            <div class="nav-status" aria-label="System status: Secure">
+                <div class="status-dot"></div>
+                SYSTEM SECURE
+            </div>
+            <a class="btn btn-ghost" href="#how-it-works" aria-label="How CipherSight works">How it works</a>
+        </nav>
+    </header>
+
+    <!-- Hero Section -->
+    <main>
+        <section class="hero" aria-labelledby="hero-heading">
+            <div class="hero-inner">
+                <div class="hero-content">
+                    <div class="eyebrow">
+                        <span class="eyebrow-dot" aria-hidden="true"></span>
+                        Anti-Quishing Security Platform
+                    </div>
+
+                    <h1 id="hero-heading">
+                        <span class="h1-line1">QR codes are the</span><br>
+                        <span class="h1-line2">new attack surface.</span>
+                    </h1>
+
+                    <p class="hero-sub">
+                        CipherSight combines <strong>Visual Cryptography</strong>, <strong>MQTT IoT messaging</strong>,
+                        and <strong>ESP32 hardware OTP</strong> to create an unbreakable chain of trust
+                        — so every QR scan is verified by a physical device you own.
+                    </p>
+
+                    <div class="cta-row">
+                        <a class="btn btn-primary" href="/merchant" aria-label="Open merchant transaction page">
+                            <i data-lucide="zap" aria-hidden="true"></i>
+                            Open Merchant Transaction
+                        </a>
+                        <a class="btn btn-outline" href="#how-it-works" aria-label="Learn how CipherSight works">
+                            See how it works →
+                        </a>
+                    </div>
+                    <p class="cta-hint">No password needed — your hardware is the key.</p>
+
+                    <div class="stats-row" aria-label="Platform statistics">
+                        <div class="stat">
+                            <span class="stat-value">2,2</span>
+                            <span class="stat-label">VC Threshold</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">4-digit</span>
+                            <span class="stat-label">MQTT OTP</span>
+                        </div>
+                        <div class="stat">
+                            <span class="stat-value">0</span>
+                            <span class="stat-label">Phishing bypass</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Hero Visual -->
+                <div class="hero-visual" aria-hidden="true">
+                    <div class="device-mockup">
+                        <!-- Floating data nodes -->
+                        <div class="data-node node-1">
+                            <i class="node-icon" data-lucide="shield-check" aria-hidden="true"></i>
+                            <div class="node-info">
+                                <span class="node-title">VC Share</span>
+                                <span class="node-val ok">VERIFIED</span>
+                            </div>
+                        </div>
+
+                        <div class="data-node node-2">
+                            <i class="node-icon" data-lucide="radio" aria-hidden="true"></i>
+                            <div class="node-info">
+                                <span class="node-title">MQTT Broker</span>
+                                <span class="node-val live">LIVE</span>
+                            </div>
+                        </div>
+
+                        <div class="data-node node-3">
+                            <i class="node-icon" data-lucide="key-round" aria-hidden="true"></i>
+                            <div class="node-info">
+                                <span class="node-title">Crypto Key</span>
+                                <span class="node-val enc">ENCRYPTED</span>
+                            </div>
+                        </div>
+
+                        <div class="data-node node-4">
+                            <i class="node-icon" data-lucide="ban" aria-hidden="true"></i>
+                            <div class="node-info">
+                                <span class="node-title">Phish Attempt</span>
+                                <span class="node-val blocked">BLOCKED</span>
+                            </div>
+                        </div>
+
+                        <!-- Central device core -->
+                        <div class="device-ring">
+                            <div class="scan-line">
+                                <div class="scan-beam"></div>
+                            </div>
+                            <div class="device-core">
+                                <i data-lucide="qr-code" class="qr-icon" aria-hidden="true"></i>
+                                <span class="device-label">ESP32 · OLED</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Threat Overview -->
+        <section class="threat-section" aria-labelledby="threat-heading">
+            <div class="section-label">
+                <span class="section-tag">// threat landscape</span>
+                <h2 class="section-title" id="threat-heading">Why QR Codes Are Being Weaponized</h2>
+                <p class="section-sub">
+                    Quishing exploits the trust gap in QR code scanning — your phone reads whatever URL is encoded, with no way to verify legitimacy before the redirect happens.
+                </p>
+            </div>
+
+            <div class="threat-cards">
+                <article class="threat-card">
+                    <i class="threat-icon" data-lucide="fish" aria-hidden="true"></i>
+                    <h3>Phishing Redirect</h3>
+                    <p>Malicious QR codes redirect users to spoofed login pages that harvest credentials. Standard URL filters cannot inspect QR payloads in real-time.</p>
+                    <span class="threat-tag">CVE-2024-QUISH</span>
+                </article>
+
+                <article class="threat-card">
+                    <i class="threat-icon" data-lucide="binoculars" aria-hidden="true"></i>
+                    <h3>MITM Interception</h3>
+                    <p>Attackers intercept QR authentication challenges mid-session, substituting their own QR or relay the victim's scan to authenticate as them.</p>
+                    <span class="threat-tag">MAN-IN-MIDDLE</span>
+                </article>
+
+                <article class="threat-card">
+                    <i class="threat-icon" data-lucide="qr-code" aria-hidden="true"></i>
+                    <h3>QR Overlay Attacks</h3>
+                    <p>Physical sticker overlays on legitimate QR codes in public spaces redirect users to credential-harvesting sites disguised as payment portals.</p>
+                    <span class="threat-tag">OVERLAY ATTACK</span>
+                </article>
+            </div>
+        </section>
+
+        <!-- How CipherSight Works -->
+        <section class="solution-section" id="how-it-works" aria-labelledby="solution-heading">
+            <div class="section-label">
+                <span class="section-tag">// our solution</span>
+                <h2 class="section-title" id="solution-heading">Four-Step Hardware Defense</h2>
+                <p class="section-sub">
+                    Each authentication attempt passes through cryptographic splitting, IoT confirmation, and physical device approval — making phishing mathematically impossible.
+                </p>
+            </div>
+
+            <div class="steps-container">
+                <div class="step">
+                    <div class="step-num">01</div>
+                        <i class="step-icon" data-lucide="layers" aria-hidden="true"></i>
+                    <h3>Visual Cryptography Split</h3>
+                    <p>
+                        The authentication QR is split into two cryptographic shares using (2,2) Visual Cryptography. Neither share alone reveals any information.
+                    </p>
+                    <span class="step-tech">VC-Engine · Python · PIL</span>
+                </div>
+
+                <div class="step">
+                    <div class="step-num">02</div>
+                        <i class="step-icon" data-lucide="scan-line" aria-hidden="true"></i>
+                        <h3>QR Delivered to OLED</h3>
+                        <p>
+                            The generated QR payload is published over MQTT and rendered on the ESP32 OLED so
+                            the customer can scan only from trusted hardware, not a spoofed screen.
+                        </p>
+                        <span class="step-tech">MQTT Payload · ESP32 OLED · Trusted Display</span>
+                    </div>
+
+                    <div class="step">
+                        <div class="step-num">03</div>
+                        <i class="step-icon" data-lucide="key-round" aria-hidden="true"></i>
+                    <h3>Hardware OTP via MQTT</h3>
+                    <p>
+                        A time-bound 4-digit code is generated and sent over MQTT to your registered ESP32 device. It appears on the OLED display — nowhere else.
+                    </p>
+                    <span class="step-tech">MQTT · HiveMQ · ESP32</span>
+                </div>
+
+                <div class="step">
+                        <div class="step-num">04</div>
+                        <i class="step-icon" data-lucide="shield-check" aria-hidden="true"></i>
+                    <h3>Cryptographic Approval</h3>
+                    <p>
+                        User enters the hardware-displayed code to prove physical possession. Mismatches are rejected instantly — phishing relays cannot replicate this.
+                    </p>
+                    <span class="step-tech">Flask · Session · HMAC</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Tech Stack -->
+        <section class="tech-section" aria-labelledby="tech-heading">
+            <div class="tech-inner">
+                <div class="section-label">
+                    <span class="section-tag">// technology</span>
+                    <h2 class="section-title" id="tech-heading">Built on Proven Security Primitives</h2>
+                </div>
+
+                <div class="tech-grid">
+                    <div class="tech-pill">
+                        <i class="tech-pill-icon" data-lucide="puzzle" aria-hidden="true"></i>
+                        <span class="tech-pill-name">Visual Cryptography</span>
+                        <span class="tech-pill-desc">(2,2) Secret Sharing — unbreakable without both shares</span>
+                    </div>
+                    <div class="tech-pill">
+                        <i class="tech-pill-icon" data-lucide="radio" aria-hidden="true"></i>
+                        <span class="tech-pill-name">MQTT Protocol</span>
+                        <span class="tech-pill-desc">Lightweight IoT messaging over HiveMQ broker</span>
+                    </div>
+                    <div class="tech-pill">
+                        <i class="tech-pill-icon" data-lucide="monitor" aria-hidden="true"></i>
+                        <span class="tech-pill-name">ESP32 + OLED</span>
+                        <span class="tech-pill-desc">Air-gapped hardware OTP display via SSD1306</span>
+                    </div>
+                    <div class="tech-pill">
+                        <i class="tech-pill-icon" data-lucide="code" aria-hidden="true"></i>
+                        <span class="tech-pill-name">Python / Flask</span>
+                        <span class="tech-pill-desc">Session management, OTP generation, API backend</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Terminal + Features -->
+        <section class="terminal-section" aria-labelledby="terminal-heading">
+            <div class="terminal-grid">
+                <div class="terminal-copy">
+                    <h2 id="terminal-heading">Security You Can<br><span class="h1-line2">Actually Verify</span></h2>
+                    <p>
+                        Every component is auditable and open. Your physical ESP32 device is the only authority that can approve an authentication session.
+                    </p>
+
+                    <ul class="feature-list" aria-label="Security features">
+                        <li>
+                            <span class="feature-check" aria-hidden="true">✓</span>
+                            Hardware-bound OTP — no SMS, no email, no cloud
+                        </li>
+                        <li>
+                            <span class="feature-check" aria-hidden="true">✓</span>
+                            Visual Cryptography prevents QR screen capture attacks
+                        </li>
+                        <li>
+                            <span class="feature-check" aria-hidden="true">✓</span>
+                            MQTT over TLS — encrypted channel to your device
+                        </li>
+                        <li>
+                            <span class="feature-check" aria-hidden="true">✓</span>
+                            Session-scoped OTPs — single-use, expiry enforced
+                        </li>
+                        <li>
+                            <span class="feature-check" aria-hidden="true">✓</span>
+                            AR overlay scanner detects malicious sticker substitutions
+                        </li>
+                    </ul>
+                </div>
+
+                <div class="terminal" role="region" aria-label="System activity log">
+                    <div class="terminal-bar">
+                        <div class="terminal-dot dot-red"></div>
+                        <div class="terminal-dot dot-yellow"></div>
+                        <div class="terminal-dot dot-green"></div>
+                        <span class="terminal-title">ciphersight — session_log</span>
+                    </div>
+                    <div class="terminal-body" aria-live="off">
+                        <div class="t-line">
+                            <span class="t-prompt">$</span>
+                            <span class="t-cmd">python core/orchestrator.py</span>
+                        </div>
+                        <span class="t-output">▶ Generating QR with URL payload...</span>
+                        <span class="t-output">▶ Applying (2,2) VC split — shares: [A, B]</span>
+                        <span class="t-output">▶ Share-A saved → outputs/share_A.png</span>
+                        <span class="t-ok">✔ Share generation complete</span>
+                        <br>
+                        <div class="t-line">
+                            <span class="t-prompt">$</span>
+                            <span class="t-cmd">python webapp/app.py</span>
+                        </div>
+                        <span class="t-output">▶ Flask server started on 0.0.0.0:5000</span>
+                        <span class="t-output">▶ MQTT connected → broker.hivemq.com</span>
+                        <span class="t-output">▶ New session: sess_1713…d4f8</span>
+                        <div class="t-line">
+                            <span class="t-prompt">></span>
+                            <span class="t-cmd">OTP generated: ****</span>
+                        </div>
+                        <span class="t-ok">✔ OTP sent → phantasm/iot/display</span>
+                        <span class="t-warn">⚡ Awaiting hardware confirmation...</span>
+                        <span class="t-ok">✔ OTP verified — ACCESS GRANTED</span>
+                        <div class="t-line">
+                            <span class="t-prompt">$</span>
+                            <span class="t-cursor"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Banner -->
+        <section class="cta-section" aria-labelledby="cta-heading">
+            <div class="cta-banner">
+                <h2 id="cta-heading">Stop the next Quishing attack — now.</h2>
+                <p>Every QR scan is a potential attack vector. CipherSight closes that gap permanently with hardware-backed cryptographic proof of identity.</p>
+                <div class="cta-actions">
+                    <a class="btn btn-primary" href="/merchant" aria-label="Open merchant transaction page">
+                        <i data-lucide="shield-check" aria-hidden="true"></i>
+                        Open Merchant Transaction
+                    </a>
+                    <a class="btn btn-outline" href="https://github.com/SVatsa12/CipherSight" target="_blank" rel="noreferrer" aria-label="View CipherSight source code on GitHub">
+                        View Source →
+                    </a>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer role="contentinfo">
+        <p class="footer-copy">© 2024 CipherSight. Anti-Quishing Security Platform. All rights reserved.</p>
+        <nav class="footer-links" aria-label="Footer navigation">
+            <a href="/static/documentation.html" aria-label="Read CipherSight technical documentation">Documentation</a>
+            <a href="https://github.com/SVatsa12/CipherSight" target="_blank" rel="noreferrer" aria-label="Open CipherSight GitHub repository">GitHub</a>
+        </nav>
+    </footer>
+
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+
+        // ── Particle Canvas ────────────────────────────────────────
+        (function () {
+            const canvas = document.getElementById('particle-canvas');
+            const ctx = canvas.getContext('2d');
+            let particles = [];
+            const NUM = 60;
+
+            function resize() {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            }
+            resize();
+            window.addEventListener('resize', resize);
+
+            class Particle {
+                constructor() { this.reset(); }
+                reset() {
+                    this.x = Math.random() * canvas.width;
+                    this.y = Math.random() * canvas.height;
+                    this.r = Math.random() * 1.5 + 0.3;
+                    this.vx = (Math.random() - 0.5) * 0.4;
+                    this.vy = (Math.random() - 0.5) * 0.4;
+                    this.alpha = Math.random() * 0.5 + 0.1;
+                    this.color = Math.random() > 0.5 ? '#00f2fe' : '#7c3aed';
+                }
+                update() {
+                    this.x += this.vx;
+                    this.y += this.vy;
+                    if (this.x < 0 || this.x > canvas.width || this.y < 0 || this.y > canvas.height) {
+                        this.reset();
+                    }
+                }
+                draw() {
+                    ctx.beginPath();
+                    ctx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+                    ctx.fillStyle = this.color;
+                    ctx.globalAlpha = this.alpha;
+                    ctx.fill();
+                    ctx.globalAlpha = 1;
+                }
+            }
+
+            for (let i = 0; i < NUM; i++) particles.push(new Particle());
+
+            function drawLines() {
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy);
+                        if (dist < 120) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = '#00f2fe';
+                            ctx.globalAlpha = (1 - dist / 120) * 0.06;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.stroke();
+                            ctx.globalAlpha = 1;
+                        }
+                    }
+                }
+            }
+
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach(p => { p.update(); p.draw(); });
+                drawLines();
+                requestAnimationFrame(loop);
+            }
+            loop();
+        })();
+
+        // ── Intersection Observer for step animations ──────────────
+        const steps = document.querySelectorAll('.step, .threat-card, .tech-pill');
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        steps.forEach(el => {
+            el.style.opacity = '0';
+            el.style.transform = 'translateY(20px)';
+            el.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+            observer.observe(el);
+        });
+
+        // ── Live threat counter ────────────────────────────────────
+        (function () {
+            const statEls = document.querySelectorAll('.stat-value');
+            // Animate first stat (VC threshold stays "2,2")
+            // Keep them static — they're factual, not counters
+        })();
+    </script>
+</body>
+</html>
