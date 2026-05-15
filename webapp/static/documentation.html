@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CipherSight — Technical Documentation</title>
+<meta name="description" content="Immersive technical documentation for CipherSight: architecture, workflow, and security design.">
+<link rel="stylesheet" href="/static/documentation.css">
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
+</head>
+<body>
+<div class="bg-scene"></div>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+
+<!-- TOPBAR -->
+<header class="topbar">
+  <a class="logo-brand" href="/">
+    <div class="logo-dot"><i class="ph-bold ph-lock-key"></i></div>
+    CipherSight
+  </a>
+  <nav class="topbar-links">
+    <a href="/" >← Home</a>
+    <a href="#workflow" class="active">Workflow</a>
+    <a href="#architecture">Architecture</a>
+    <a href="#security">Security</a>
+    <a href="https://github.com/SVatsa12/CipherSight" target="_blank" rel="noreferrer" class="btn-gh"><i class="ph-bold ph-github-logo"></i> GitHub</a>
+  </nav>
+</header>
+
+<!-- HERO -->
+<section class="doc-hero">
+  <div class="doc-eyebrow"><span class="eyebrow-dot"></span>Technical Documentation</div>
+  <h1>How <span class="grad-text">CipherSight</span> Works</h1>
+  <p>A visual deep-dive into the hardware-backed anti-quishing platform — from QR generation to trusted hardware verification. Follow the journey of a single transaction.</p>
+  <div class="chapter-nav">
+    <a href="#workflow"     class="chapter-pill"><i class="ph-bold ph-lightning"></i> E2E Workflow</a>
+    <a href="#architecture" class="chapter-pill"><i class="ph-bold ph-stack"></i> Architecture</a>
+    <a href="#sysmap"       class="chapter-pill"><i class="ph-bold ph-map-trifold"></i> System Map</a>
+    <a href="#security"     class="chapter-pill"><i class="ph-bold ph-shield-check"></i> Security</a>
+    <a href="#stack"        class="chapter-pill"><i class="ph-bold ph-wrench"></i> Tech Stack</a>
+    <a href="#future"       class="chapter-pill"><i class="ph-bold ph-rocket"></i> Roadmap</a>
+  </div>
+</section>
+
+<main class="doc-content">
+
+  <!-- ── SECTION 1: WORKFLOW ── -->
+  <div id="workflow">
+    <div class="sec-header reveal">
+      <span class="sec-num">01 — Workflow</span>
+      <div class="sec-line"></div>
+      <h2>End-to-End Transaction Flow</h2>
+    </div>
+
+    <div class="flow-diagram reveal">
+      <div class="flow-steps">
+
+        <div class="flow-step">
+          <div class="step-icon step-c1"><i class="ph-bold ph-credit-card"></i></div>
+          <div class="step-body">
+            <div class="step-title">Merchant Initiates Transaction</div>
+            <div class="step-desc">Merchant enters the payment amount in the POS dashboard and submits a payment request. The Flask backend receives this and assigns a unique <code>transaction_id</code>.</div>
+            <span class="step-tag tag-c1">POS Dashboard → Flask API</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c2"><i class="ph-bold ph-key"></i></div>
+          <div class="step-body">
+            <div class="step-title">Session & OTP Generated</div>
+            <div class="step-desc">Server creates a cryptographically random 4-digit challenge OTP and binds it to the transaction session. OTP is stored in-memory, scoped to this exact transaction ID.</div>
+            <span class="step-tag tag-c2">In-memory OTP store</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c1"><i class="ph-bold ph-qr-code"></i></div>
+          <div class="step-body">
+            <div class="step-title">QR Payload Constructed</div>
+            <div class="step-desc">The customer verification URL (containing the transaction ID) is encoded into a QR code matrix using the <code>qrcode</code> library. The result is a binary pixel matrix.</div>
+            <span class="step-tag tag-c1">qrcode + NumPy matrix</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c3"><i class="ph-bold ph-puzzle-piece"></i></div>
+          <div class="step-body">
+            <div class="step-title">Visual Cryptography Split</div>
+            <div class="step-desc">The QR matrix is split using a (2,2) visual secret sharing scheme. Two independent shares are generated — neither share alone reveals any readable information about the QR code.</div>
+            <span class="step-tag tag-c3">Visual cryptography (2,2) threshold</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c5"><i class="ph-bold ph-broadcast"></i></div>
+          <div class="step-body">
+            <div class="step-title">MQTT Publish to ESP32</div>
+            <div class="step-desc">The QR pixel data and OTP challenge code are serialized and published to a specific MQTT topic via the Paho broker. The ESP32 device, subscribed to this topic, receives the message in real-time.</div>
+            <span class="step-tag tag-c5">Paho MQTT → broker → ESP32</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c4"><i class="ph-bold ph-monitor"></i></div>
+          <div class="step-body">
+            <div class="step-title">Trusted Hardware Displays OTP</div>
+            <div class="step-desc">The ESP32 parses the MQTT payload and renders the 4-digit OTP on its OLED screen. This is the critical <em>out-of-band</em> factor — the challenge is shown on a trusted physical device the attacker cannot read remotely.</div>
+            <span class="step-tag tag-c4">ESP32 + OLED (out-of-band)</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c2"><i class="ph-bold ph-eye"></i></div>
+          <div class="step-body">
+            <div class="step-title">Customer Scans QR & Enters OTP</div>
+            <div class="step-desc">Customer scans the merchant's displayed QR code and opens the verification page. They physically read the OTP from the OLED screen and type it into the web form — proving physical presence.</div>
+            <span class="step-tag tag-c2">Human verification step</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c1"><i class="ph-bold ph-check-circle"></i></div>
+          <div class="step-body">
+            <div class="step-title">Backend Validates & Completes</div>
+            <div class="step-desc">Flask receives the OTP, checks it against the session-scoped store, and immediately invalidates it. If valid, the transaction is marked complete and a success response is returned.</div>
+            <span class="step-tag tag-c1">OTP invalidated after first use</span>
+          </div>
+        </div>
+
+        <div class="flow-step">
+          <div class="step-icon step-c3"><i class="ph-bold ph-lock-laminated"></i></div>
+          <div class="step-body">
+            <div class="step-title">Shares Reconstructed (Cryptographic Proof)</div>
+            <div class="step-desc">Optionally, the two QR shares are recombined via XOR overlay to reconstruct the original QR for audit/logging purposes — demonstrating the (2,2) threshold is satisfied.</div>
+            <span class="step-tag tag-c3">XOR share reconstruction</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="callout reveal">
+      <span class="callout-icon"><i class="ph-bold ph-lightbulb"></i></span>
+      <div class="callout-text"><strong>Why visual cryptography?</strong> A screen-capture attack or MITM proxy cannot intercept the OTP because it is delivered exclusively via a physical OLED display that the attacker has no network access to. Both the QR and the OTP must be colluded to complete payment.</div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 2: ARCHITECTURE ── -->
+  <div id="architecture">
+    <div class="sec-header reveal">
+      <span class="sec-num">02 — Architecture</span>
+      <div class="sec-line"></div>
+      <h2>Core System Layers</h2>
+    </div>
+    <div class="arch-grid reveal">
+      <div class="arch-card arch-c1">
+        <span class="arch-icon"><i class="ph-bold ph-globe"></i></span>
+        <h3>Frontend Layer</h3>
+        <ul>
+          <li>Landing page for product overview and merchant entry points</li>
+          <li>POS merchant interface: amount entry, QR display, and challenge dispatch</li>
+          <li>Customer verification flow: OTP input, real-time status polling</li>
+          <li>Static HTML/CSS/JS served directly by Flask</li>
+        </ul>
+      </div>
+      <div class="arch-card arch-c2">
+        <span class="arch-icon"><i class="ph-bold ph-gear-six"></i></span>
+        <h3>Backend Layer (Flask)</h3>
+        <ul>
+          <li>REST endpoints: <code>/start</code>, <code>/verify</code>, <code>/status</code></li>
+          <li>In-memory transaction and OTP state management</li>
+          <li>QR generation pipeline and MQTT publish orchestration</li>
+          <li>Session scoping prevents OTP cross-transaction leakage</li>
+        </ul>
+      </div>
+      <div class="arch-card arch-c3">
+        <span class="arch-icon"><i class="ph-bold ph-dna"></i></span>
+        <h3>Cryptography Layer</h3>
+        <ul>
+          <li>(2,2) visual secret sharing — both shares required for reconstruction</li>
+          <li>Single share reveals zero readable information (information-theoretic)</li>
+          <li>Anti-capture: screen recordings of share alone are useless</li>
+          <li>NumPy XOR operations for share generation and reconstruction</li>
+        </ul>
+      </div>
+      <div class="arch-card arch-c4">
+        <span class="arch-icon"><i class="ph-bold ph-cell-signal-full"></i></span>
+        <h3>IoT Layer (ESP32 + MQTT)</h3>
+        <ul>
+          <li>ESP32 subscribes to MQTT topic on boot</li>
+          <li>Receives JSON payload containing OTP on transaction start</li>
+          <li>OLED renders OTP as the trusted out-of-band display</li>
+          <li>Physically decouples approval from potentially compromised UI</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 3: SYSTEM MAP ── -->
+  <div id="sysmap">
+    <div class="sec-header reveal">
+      <span class="sec-num">03 — System Map</span>
+      <div class="sec-line"></div>
+      <h2>Component Interaction Diagram</h2>
+    </div>
+    <div class="sys-map-wrap reveal">
+      <svg class="sys-map" viewBox="0 0 860 420" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="rgba(0,242,254,0.6)"/>
+          </marker>
+          <marker id="arr2" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="rgba(124,58,237,0.6)"/>
+          </marker>
+          <marker id="arr3" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="rgba(0,229,160,0.6)"/>
+          </marker>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+            <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+        </defs>
+
+        <!-- Merchant POS -->
+        <rect x="20" y="160" width="140" height="100" rx="14" fill="rgba(0,242,254,0.06)" stroke="rgba(0,242,254,0.3)" stroke-width="1.5"/>
+        <rect x="74" y="183" width="32" height="24" rx="4" fill="none" stroke="#00f2fe" stroke-width="1.5"/><line x1="74" y1="192" x2="106" y2="192" stroke="#00f2fe" stroke-width="1.5"/>
+        <text x="90" y="222" text-anchor="middle" fill="#f0f6ff" font-size="12" font-weight="700" font-family="Outfit,sans-serif">Merchant POS</text>
+        <text x="90" y="240" text-anchor="middle" fill="#7a8ba3" font-size="10">HTML/JS Interface</text>
+
+        <!-- Flask Backend -->
+        <rect x="340" y="140" width="180" height="140" rx="14" fill="rgba(124,58,237,0.08)" stroke="rgba(124,58,237,0.4)" stroke-width="1.5"/>
+        <circle cx="430" cy="178" r="10" fill="none" stroke="#a78bfa" stroke-width="1.5"/><circle cx="430" cy="178" r="4" fill="#a78bfa"/><line x1="430" y1="164" x2="430" y2="168" stroke="#a78bfa" stroke-width="1.5"/><line x1="430" y1="188" x2="430" y2="192" stroke="#a78bfa" stroke-width="1.5"/><line x1="416" y1="178" x2="420" y2="178" stroke="#a78bfa" stroke-width="1.5"/><line x1="440" y1="178" x2="444" y2="178" stroke="#a78bfa" stroke-width="1.5"/>
+        <text x="430" y="208" text-anchor="middle" fill="#f0f6ff" font-size="13" font-weight="700" font-family="Outfit,sans-serif">Flask Backend</text>
+        <text x="430" y="226" text-anchor="middle" fill="#7a8ba3" font-size="10">QR gen · OTP · MQTT pub</text>
+        <text x="430" y="244" text-anchor="middle" fill="#7a8ba3" font-size="10">Visual Cryptography</text>
+        <text x="430" y="262" text-anchor="middle" fill="#7a8ba3" font-size="10">Session State</text>
+
+        <!-- MQTT Broker -->
+        <rect x="340" y="330" width="180" height="70" rx="14" fill="rgba(255,168,64,0.07)" stroke="rgba(255,168,64,0.35)" stroke-width="1.5"/>
+        <line x1="430" y1="345" x2="430" y2="358" stroke="#ffa840" stroke-width="1.5"/><path d="M418,348 Q424,342 430,345 Q436,342 442,348" fill="none" stroke="#ffa840" stroke-width="1.5"/><path d="M412,352 Q421,340 430,344 Q439,340 448,352" fill="none" stroke="#ffa840" stroke-width="1.5"/>
+        <text x="430" y="378" text-anchor="middle" fill="#f0f6ff" font-size="12" font-weight="700" font-family="Outfit,sans-serif">MQTT Broker</text>
+        <text x="430" y="394" text-anchor="middle" fill="#7a8ba3" font-size="10">Paho / HiveMQ</text>
+
+        <!-- ESP32 -->
+        <rect x="660" y="310" width="180" height="90" rx="14" fill="rgba(0,229,160,0.07)" stroke="rgba(0,229,160,0.3)" stroke-width="1.5"/>
+        <rect x="733" y="332" width="34" height="24" rx="3" fill="none" stroke="#00e5a0" stroke-width="1.5"/><line x1="743" y1="356" x2="757" y2="356" stroke="#00e5a0" stroke-width="1.5"/><line x1="750" y1="356" x2="750" y2="360" stroke="#00e5a0" stroke-width="1.5"/>
+        <text x="750" y="368" text-anchor="middle" fill="#f0f6ff" font-size="12" font-weight="700" font-family="Outfit,sans-serif">ESP32 + OLED</text>
+        <text x="750" y="386" text-anchor="middle" fill="#7a8ba3" font-size="10">Trusted Hardware Display</text>
+
+        <!-- Customer -->
+        <rect x="660" y="140" width="180" height="100" rx="14" fill="rgba(79,172,254,0.07)" stroke="rgba(79,172,254,0.3)" stroke-width="1.5"/>
+        <circle cx="750" cy="168" r="8" fill="none" stroke="#4facfe" stroke-width="1.5"/><path d="M733,185 Q733,175 750,175 Q767,175 767,185" fill="none" stroke="#4facfe" stroke-width="1.5"/>
+        <text x="750" y="200" text-anchor="middle" fill="#f0f6ff" font-size="12" font-weight="700" font-family="Outfit,sans-serif">Customer</text>
+        <text x="750" y="218" text-anchor="middle" fill="#7a8ba3" font-size="10">Scans QR · Reads OTP</text>
+        <text x="750" y="234" text-anchor="middle" fill="#7a8ba3" font-size="10">Enters code in browser</text>
+
+        <!-- Arrows -->
+        <!-- POS → Flask -->
+        <line x1="160" y1="210" x2="338" y2="210" stroke="rgba(0,242,254,0.5)" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+        <text x="248" y="202" text-anchor="middle" fill="#00f2fe" font-size="10">start transaction</text>
+
+        <!-- Flask → MQTT -->
+        <line x1="430" y1="280" x2="430" y2="328" stroke="rgba(255,168,64,0.5)" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr)"/>
+        <text x="455" y="310" fill="#ffa840" font-size="10">publish OTP</text>
+
+        <!-- MQTT → ESP32 -->
+        <path d="M520,365 Q590,365 660,355" stroke="rgba(0,229,160,0.5)" stroke-width="1.5" stroke-dasharray="6,4" fill="none" marker-end="url(#arr3)"/>
+        <text x="590" y="348" text-anchor="middle" fill="#00e5a0" font-size="10">subscribe</text>
+
+        <!-- Flask → Customer (QR display) -->
+        <line x1="520" y1="190" x2="658" y2="190" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arr2)"/>
+        <text x="588" y="182" text-anchor="middle" fill="#a78bfa" font-size="10">QR code page</text>
+
+        <!-- Customer → Flask (verify OTP) -->
+        <path d="M750,240 Q750,290 620,290 Q520,290 520,270" stroke="rgba(0,242,254,0.4)" stroke-width="1.5" stroke-dasharray="6,4" fill="none" marker-end="url(#arr)"/>
+        <text x="670" y="285" text-anchor="middle" fill="#00f2fe" font-size="10">verify OTP</text>
+
+        <!-- ESP32 OTP to customer (visual/physical) -->
+        <line x1="750" y1="310" x2="750" y2="242" stroke="rgba(0,229,160,0.4)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr3)"/>
+        <text x="772" y="280" fill="#00e5a0" font-size="10">OLED display</text>
+
+        <!-- Legend -->
+        <rect x="20" y="330" width="280" height="80" rx="10" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.07)" stroke-width="1"/>
+        <text x="35" y="352" fill="#7a8ba3" font-size="11" font-weight="600" font-family="Outfit,sans-serif">LEGEND</text>
+        <line x1="35" y1="368" x2="70" y2="368" stroke="rgba(0,242,254,0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="78" y="372" fill="#7a8ba3" font-size="10">HTTP / Web</text>
+        <line x1="35" y1="386" x2="70" y2="386" stroke="rgba(255,168,64,0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="78" y="390" fill="#7a8ba3" font-size="10">MQTT publish</text>
+        <line x1="160" y1="368" x2="195" y2="368" stroke="rgba(0,229,160,0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="203" y="372" fill="#7a8ba3" font-size="10">IoT / Hardware</text>
+        <line x1="160" y1="386" x2="195" y2="386" stroke="rgba(124,58,237,0.5)" stroke-width="1.5" stroke-dasharray="6,4"/>
+        <text x="203" y="390" fill="#7a8ba3" font-size="10">Crypto / Shares</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ── SECTION 4: SECURITY ── -->
+  <div id="security">
+    <div class="sec-header reveal">
+      <span class="sec-num">04 — Security</span>
+      <div class="sec-line"></div>
+      <h2>Security Guarantees</h2>
+    </div>
+    <div class="security-grid reveal">
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-fingerprint"></i></div>
+        <h4>Possession Factor</h4>
+        <p>Flow requires physical access to the registered ESP32 hardware — no remote-only attack can succeed.</p>
+      </div>
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-timer"></i></div>
+        <h4>Ephemeral OTP</h4>
+        <p>Time-sensitive code drastically lowers replay and delayed interception risk. Expires after single use.</p>
+      </div>
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-target"></i></div>
+        <h4>Session Scoping</h4>
+        <p>OTP is cryptographically bound to a specific <code>transaction_id</code> — invalid in any other context.</p>
+      </div>
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-seal-check"></i></div>
+        <h4>One-Time Semantics</h4>
+        <p>OTP is invalidated immediately after successful verification, defeating any replay attempt.</p>
+      </div>
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-lock-key"></i></div>
+        <h4>Encrypted Transport</h4>
+        <p>MQTT channel should run with TLS for encrypted broker-device communication in production.</p>
+      </div>
+      <div class="sec-pill">
+        <div class="sec-pill-icon"><i class="ph-bold ph-shield-slash"></i></div>
+        <h4>Phishing Resistance</h4>
+        <p>Relay attacks fail — attacker cannot read the OLED output in real-time without physical proximity.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 5: TECH STACK ── -->
+  <div id="stack">
+    <div class="sec-header reveal">
+      <span class="sec-num">05 — Stack</span>
+      <div class="sec-line"></div>
+      <h2>Essential Technical Components</h2>
+    </div>
+    <div class="tech-stack reveal">
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-flask"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">Flask</span>
+          <span class="tech-badge-desc">HTTP API & page serving</span>
+        </div>
+      </div>
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-broadcast"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">Paho MQTT</span>
+          <span class="tech-badge-desc">Broker publish/subscribe</span>
+        </div>
+      </div>
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-qr-code"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">qrcode + PIL</span>
+          <span class="tech-badge-desc">QR matrix generation</span>
+        </div>
+      </div>
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-matrix"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">NumPy</span>
+          <span class="tech-badge-desc">Share matrix processing</span>
+        </div>
+      </div>
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-cpu"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">ESP32 + Arduino</span>
+          <span class="tech-badge-desc">Trusted OLED display</span>
+        </div>
+      </div>
+      <div class="tech-badge">
+        <div class="tech-badge-icon"><i class="ph-bold ph-plugs-connected"></i></div>
+        <div class="tech-badge-info">
+          <span class="tech-badge-name">AsyncMQTT (ESP)</span>
+          <span class="tech-badge-desc">IoT MQTT subscription</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── SECTION 6: LIMITATIONS + FUTURE ── -->
+  <div id="future">
+    <div class="sec-header reveal">
+      <span class="sec-num">06 — Roadmap</span>
+      <div class="sec-line"></div>
+      <h2>Limitations &amp; Future Upgrades</h2>
+    </div>
+    <div class="two-col reveal">
+      <div class="info-panel warn">
+        <div class="panel-head"><span class="panel-head-icon"><i class="ph-bold ph-warning"></i></span> Current Limitations</div>
+        <ul class="info-list">
+          <li>In-memory OTP/session store does not survive server restarts</li>
+          <li>Single-instance architecture limits horizontal scaling</li>
+          <li>Demo-oriented broker/topic setup needs hardening for multi-tenancy</li>
+          <li>Observability, auditing, and logging are minimal at this stage</li>
+        </ul>
+      </div>
+      <div class="info-panel future">
+        <div class="panel-head"><span class="panel-head-icon"><i class="ph-bold ph-rocket-launch"></i></span> Planned Upgrades</div>
+        <ul class="info-list">
+          <li><strong>Redis / PostgreSQL</strong> for persistent OTP and session state</li>
+          <li><strong>Mutual TLS + cert pinning</strong> to strengthen broker/device trust</li>
+          <li><strong>Hardware attestation</strong> — device-bound key verification</li>
+          <li><strong>Risk scoring engine</strong> with behavioral anomaly detection</li>
+          <li><strong>WebAuthn / FIDO2</strong> as an additional strong second factor</li>
+          <li><strong>HSM/KMS-backed secrets</strong> and rotating signing keys</li>
+          <li><strong>SIEM audit export</strong> for real-time SOC integration</li>
+          <li><strong>Docker + orchestration</strong> for cloud/on-prem rollout</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="callout reveal">
+      <span class="callout-icon"><i class="ph-bold ph-telescope"></i></span>
+      <div class="callout-text">The current implementation is a <strong>proof-of-concept prototype</strong> designed to demonstrate the anti-quishing principle. The cryptographic guarantees are sound; production hardening focuses on persistence, scalability, and operational security.</div>
+    </div>
+  </div>
+
+</main>
+
+<footer class="doc-footer">
+  <p>CipherSight © 2024 · <a href="https://github.com/SVatsa12/CipherSight" target="_blank" rel="noreferrer">GitHub Repository</a> · <a href="/">Back to Home</a></p>
+</footer>
+
+<script>
+// Scroll reveal
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); } });
+}, { threshold: 0.1 });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+// Smooth scroll for chapter pills
+document.querySelectorAll('a[href^="#"]').forEach(a => {
+  a.addEventListener('click', e => {
+    const target = document.querySelector(a.getAttribute('href'));
+    if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  });
+});
+
+// Active nav highlight on scroll
+const sections = document.querySelectorAll('[id]');
+const navLinks = document.querySelectorAll('.topbar-links a[href^="#"]');
+window.addEventListener('scroll', () => {
+  let current = '';
+  sections.forEach(s => { if (window.scrollY >= s.offsetTop - 120) current = s.id; });
+  navLinks.forEach(a => {
+    a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+  });
+});
+</script>
+</body>
+</html>
